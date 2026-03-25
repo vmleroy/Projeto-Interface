@@ -18,6 +18,8 @@ import type {
 
 import type {
   BridgeParams,
+  DeckParams,
+  DeckResult,
   ErrorResponse,
   HealthStatus,
   SectionParams,
@@ -196,6 +198,93 @@ export const useGenerateBridgeReport = <
   TContext
 > => {
   return useMutation(getGenerateBridgeReportMutationOptions(options));
+};
+
+/**
+ * Full deck slab verification - bending ELU for positive and negative reinforcement (with As,min check) plus shear VRd,c per NBR 6118:2023
+ * @summary Verify bridge deck slab (bending + shear)
+ */
+export const getVerifyDeckUrl = () => {
+  return `/api/bridge/verify-deck`;
+};
+
+export const verifyDeck = async (
+  deckParams: DeckParams,
+  options?: RequestInit,
+): Promise<DeckResult> => {
+  return customFetch<DeckResult>(getVerifyDeckUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(deckParams),
+  });
+};
+
+export const getVerifyDeckMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyDeck>>,
+    TError,
+    { data: BodyType<DeckParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof verifyDeck>>,
+  TError,
+  { data: BodyType<DeckParams> },
+  TContext
+> => {
+  const mutationKey = ["verifyDeck"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof verifyDeck>>,
+    { data: BodyType<DeckParams> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return verifyDeck(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VerifyDeckMutationResult = NonNullable<
+  Awaited<ReturnType<typeof verifyDeck>>
+>;
+export type VerifyDeckMutationBody = BodyType<DeckParams>;
+export type VerifyDeckMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Verify bridge deck slab (bending + shear)
+ */
+export const useVerifyDeck = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyDeck>>,
+    TError,
+    { data: BodyType<DeckParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof verifyDeck>>,
+  TError,
+  { data: BodyType<DeckParams> },
+  TContext
+> => {
+  return useMutation(getVerifyDeckMutationOptions(options));
 };
 
 /**

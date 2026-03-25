@@ -37,6 +37,72 @@ export const GenerateBridgeReportBody = zod.object({
 });
 
 /**
+ * Full deck slab verification - bending ELU for positive and negative reinforcement (with As,min check) plus shear VRd,c per NBR 6118:2023
+ * @summary Verify bridge deck slab (bending + shear)
+ */
+export const VerifyDeckBody = zod
+  .object({
+    hCm: zod.number().describe("Slab thickness (cm)"),
+    fck: zod.number().describe("Concrete characteristic strength (MPa)"),
+    nSd: zod.number().describe("Normal force, positive = compression (kN\/m)"),
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    mEluPos: zod.number().describe("Positive bending moment - ELU (kN.m\/m)"),
+    phiPosMm: zod.number().describe("Positive reinforcement bar diameter (mm)"),
+    sPoscm: zod.number().describe("Positive reinforcement bar spacing (cm)"),
+    mEluNeg: zod.number().describe("Negative bending moment - ELU (kN.m\/m)"),
+    phiNegMm: zod.number().describe("Negative reinforcement bar diameter (mm)"),
+    sNegCm: zod.number().describe("Negative reinforcement bar spacing (cm)"),
+  })
+  .describe(
+    "Input parameters for full deck slab verification (bending + shear)",
+  );
+
+export const VerifyDeckResponse = zod
+  .object({
+    pos: zod
+      .object({
+        dCm: zod.number().describe("Effective depth (cm)"),
+        kmd: zod.number().describe("Normalized moment kmd = M\/(b\*d²\*fcd)"),
+        asReq: zod.number().describe("Required reinforcement area (cm²\/m)"),
+        asMin: zod.number().describe("Minimum reinforcement area (cm²\/m)"),
+        asAdot: zod
+          .number()
+          .describe("Adopted required area = max(asReq, asMin) (cm²\/m)"),
+        asProv: zod
+          .number()
+          .describe("Provided reinforcement area from bar+spacing (cm²\/m)"),
+        atende: zod.boolean().describe("Check passed (asProv >= asAdot)"),
+        overReinforced: zod
+          .boolean()
+          .describe("Section is over-reinforced (kmd > 0.372)"),
+      })
+      .describe("Positive reinforcement (sagging) results"),
+    neg: zod
+      .object({
+        dCm: zod.number().describe("Effective depth (cm)"),
+        kmd: zod.number().describe("Normalized moment kmd = M\/(b\*d²\*fcd)"),
+        asReq: zod.number().describe("Required reinforcement area (cm²\/m)"),
+        asMin: zod.number().describe("Minimum reinforcement area (cm²\/m)"),
+        asAdot: zod
+          .number()
+          .describe("Adopted required area = max(asReq, asMin) (cm²\/m)"),
+        asProv: zod
+          .number()
+          .describe("Provided reinforcement area from bar+spacing (cm²\/m)"),
+        atende: zod.boolean().describe("Check passed (asProv >= asAdot)"),
+        overReinforced: zod
+          .boolean()
+          .describe("Section is over-reinforced (kmd > 0.372)"),
+      })
+      .describe("Negative reinforcement (hogging) results"),
+    vRdcFinal: zod.number().describe("Shear resistance VRd,c (kN\/m)"),
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    cortanteOk: zod.boolean().describe("Shear check passed"),
+    aprovado: zod.boolean().describe("All checks passed"),
+  })
+  .describe("Full deck slab verification results");
+
+/**
  * Calculates VRd,c for slabs without transverse reinforcement per NBR 6118:2023 Item 19.4.1
  * @summary Verify shear per NBR 6118:2023
  */

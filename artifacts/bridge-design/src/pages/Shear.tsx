@@ -90,6 +90,9 @@ export default function Shear() {
           <Link href="/shear" className="whitespace-nowrap px-5 py-3 rounded-xl bg-primary/20 text-primary border border-primary/30 font-medium font-display text-sm shadow-[0_0_15px_rgba(var(--primary),0.2)]">
             Módulo 3: Cortante NBR 6118:2023
           </Link>
+          <Link href="/deck" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
+            Módulo 4: Tabuleiro
+          </Link>
         </div>
 
         {/* Header Section */}

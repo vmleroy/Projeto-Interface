@@ -100,6 +100,9 @@ export default function Verify() {
           <Link href="/shear" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
             Módulo 3: Cortante NBR 6118:2023
           </Link>
+          <Link href="/deck" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
+            Módulo 4: Tabuleiro
+          </Link>
         </div>
 
         {/* Header Section */}

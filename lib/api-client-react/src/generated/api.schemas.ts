@@ -117,6 +117,72 @@ export interface VerificationResult {
 }
 
 /**
+ * Input parameters for full deck slab verification (bending + shear)
+ */
+export interface DeckParams {
+  /** Slab thickness (cm) */
+  hCm: number;
+  /** Concrete characteristic strength (MPa) */
+  fck: number;
+  /** Normal force, positive = compression (kN/m) */
+  nSd: number;
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Positive bending moment - ELU (kN.m/m) */
+  mEluPos: number;
+  /** Positive reinforcement bar diameter (mm) */
+  phiPosMm: number;
+  /** Positive reinforcement bar spacing (cm) */
+  sPoscm: number;
+  /** Negative bending moment - ELU (kN.m/m) */
+  mEluNeg: number;
+  /** Negative reinforcement bar diameter (mm) */
+  phiNegMm: number;
+  /** Negative reinforcement bar spacing (cm) */
+  sNegCm: number;
+}
+
+/**
+ * Bending verification result for one reinforcement layer
+ */
+export interface RebarResult {
+  /** Effective depth (cm) */
+  dCm: number;
+  /** Normalized moment kmd = M/(b*d²*fcd) */
+  kmd: number;
+  /** Required reinforcement area (cm²/m) */
+  asReq: number;
+  /** Minimum reinforcement area (cm²/m) */
+  asMin: number;
+  /** Adopted required area = max(asReq, asMin) (cm²/m) */
+  asAdot: number;
+  /** Provided reinforcement area from bar+spacing (cm²/m) */
+  asProv: number;
+  /** Check passed (asProv >= asAdot) */
+  atende: boolean;
+  /** Section is over-reinforced (kmd > 0.372) */
+  overReinforced: boolean;
+}
+
+/**
+ * Full deck slab verification results
+ */
+export interface DeckResult {
+  /** Positive reinforcement (sagging) results */
+  pos: RebarResult;
+  /** Negative reinforcement (hogging) results */
+  neg: RebarResult;
+  /** Shear resistance VRd,c (kN/m) */
+  vRdcFinal: number;
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Shear check passed */
+  cortanteOk: boolean;
+  /** All checks passed */
+  aprovado: boolean;
+}
+
+/**
  * Input parameters for NBR 6118:2023 shear verification (Item 19.4.1)
  */
 export interface ShearParams {

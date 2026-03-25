@@ -51,6 +51,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /bridge/verify-deck:
+    post:
+      operationId: verifyDeck
+      tags: [bridge]
+      summary: Verify bridge deck slab (bending + shear)
+      description: Full deck slab verification - bending ELU for positive and negative reinforcement (with As,min check) plus shear VRd,c per NBR 6118:2023
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeckParams"
+      responses:
+        "200":
+          description: Deck verification results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeckResult"
+        "400":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /bridge/verify-shear:
     post:
       operationId: verifyShearNBR6118
@@ -244,6 +269,117 @@ components:
         - fadigaOk
         - vSd
         - vRd1
+        - cortanteOk
+        - aprovado
+    DeckParams:
+      type: object
+      description: Input parameters for full deck slab verification (bending + shear)
+      properties:
+        hCm:
+          type: number
+          description: Slab thickness (cm)
+        fck:
+          type: number
+          description: Concrete characteristic strength (MPa)
+        nSd:
+          type: number
+          description: Normal force, positive = compression (kN/m)
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        mEluPos:
+          type: number
+          description: Positive bending moment - ELU (kN.m/m)
+        phiPosMm:
+          type: number
+          description: Positive reinforcement bar diameter (mm)
+        sPoscm:
+          type: number
+          description: Positive reinforcement bar spacing (cm)
+        mEluNeg:
+          type: number
+          description: Negative bending moment - ELU (kN.m/m)
+        phiNegMm:
+          type: number
+          description: Negative reinforcement bar diameter (mm)
+        sNegCm:
+          type: number
+          description: Negative reinforcement bar spacing (cm)
+      required:
+        - hCm
+        - fck
+        - nSd
+        - vSd
+        - mEluPos
+        - phiPosMm
+        - sPoscm
+        - mEluNeg
+        - phiNegMm
+        - sNegCm
+    RebarResult:
+      type: object
+      description: Bending verification result for one reinforcement layer
+      properties:
+        dCm:
+          type: number
+          description: Effective depth (cm)
+        kmd:
+          type: number
+          description: Normalized moment kmd = M/(b*d²*fcd)
+        asReq:
+          type: number
+          description: Required reinforcement area (cm²/m)
+        asMin:
+          type: number
+          description: Minimum reinforcement area (cm²/m)
+        asAdot:
+          type: number
+          description: Adopted required area = max(asReq, asMin) (cm²/m)
+        asProv:
+          type: number
+          description: Provided reinforcement area from bar+spacing (cm²/m)
+        atende:
+          type: boolean
+          description: Check passed (asProv >= asAdot)
+        overReinforced:
+          type: boolean
+          description: Section is over-reinforced (kmd > 0.372)
+      required:
+        - dCm
+        - kmd
+        - asReq
+        - asMin
+        - asAdot
+        - asProv
+        - atende
+        - overReinforced
+    DeckResult:
+      type: object
+      description: Full deck slab verification results
+      properties:
+        pos:
+          $ref: "#/components/schemas/RebarResult"
+          description: Positive reinforcement (sagging) results
+        neg:
+          $ref: "#/components/schemas/RebarResult"
+          description: Negative reinforcement (hogging) results
+        vRdcFinal:
+          type: number
+          description: Shear resistance VRd,c (kN/m)
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        cortanteOk:
+          type: boolean
+          description: Shear check passed
+        aprovado:
+          type: boolean
+          description: All checks passed
+      required:
+        - pos
+        - neg
+        - vRdcFinal
+        - vSd
         - cortanteOk
         - aprovado
     ShearParams:
