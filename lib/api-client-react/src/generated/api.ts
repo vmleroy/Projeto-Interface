@@ -21,6 +21,8 @@ import type {
   ErrorResponse,
   HealthStatus,
   SectionParams,
+  ShearParams,
+  ShearResult,
   VerificationResult,
 } from "./api.schemas";
 
@@ -194,6 +196,93 @@ export const useGenerateBridgeReport = <
   TContext
 > => {
   return useMutation(getGenerateBridgeReportMutationOptions(options));
+};
+
+/**
+ * Calculates VRd,c for slabs without transverse reinforcement per NBR 6118:2023 Item 19.4.1
+ * @summary Verify shear per NBR 6118:2023
+ */
+export const getVerifyShearNBR6118Url = () => {
+  return `/api/bridge/verify-shear`;
+};
+
+export const verifyShearNBR6118 = async (
+  shearParams: ShearParams,
+  options?: RequestInit,
+): Promise<ShearResult> => {
+  return customFetch<ShearResult>(getVerifyShearNBR6118Url(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(shearParams),
+  });
+};
+
+export const getVerifyShearNBR6118MutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyShearNBR6118>>,
+    TError,
+    { data: BodyType<ShearParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof verifyShearNBR6118>>,
+  TError,
+  { data: BodyType<ShearParams> },
+  TContext
+> => {
+  const mutationKey = ["verifyShearNBR6118"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof verifyShearNBR6118>>,
+    { data: BodyType<ShearParams> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return verifyShearNBR6118(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VerifyShearNBR6118MutationResult = NonNullable<
+  Awaited<ReturnType<typeof verifyShearNBR6118>>
+>;
+export type VerifyShearNBR6118MutationBody = BodyType<ShearParams>;
+export type VerifyShearNBR6118MutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Verify shear per NBR 6118:2023
+ */
+export const useVerifyShearNBR6118 = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifyShearNBR6118>>,
+    TError,
+    { data: BodyType<ShearParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof verifyShearNBR6118>>,
+  TError,
+  { data: BodyType<ShearParams> },
+  TContext
+> => {
+  return useMutation(getVerifyShearNBR6118MutationOptions(options));
 };
 
 /**

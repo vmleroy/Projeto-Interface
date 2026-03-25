@@ -116,6 +116,46 @@ export interface VerificationResult {
   aprovado: boolean;
 }
 
+/**
+ * Input parameters for NBR 6118:2023 shear verification (Item 19.4.1)
+ */
+export interface ShearParams {
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Normal compressive force (kN/m), positive = compression */
+  nSd: number;
+  /** Longitudinal reinforcement area contributing to shear (cm²/m) */
+  as1Cm2: number;
+  /** Slab thickness (cm) */
+  hCm: number;
+  /** Concrete characteristic compressive strength (MPa) */
+  fck: number;
+}
+
+/**
+ * NBR 6118:2023 shear verification results
+ */
+export interface ShearResult {
+  /** Effective depth used (cm) */
+  dCm: number;
+  /** Size effect coefficient k */
+  k: number;
+  /** Longitudinal reinforcement ratio ρl */
+  rhoL: number;
+  /** Compressive stress from normal force σcp (MPa) */
+  sigmaCp: number;
+  /** Shear resistance VRd,c (kN/m) */
+  vRdc: number;
+  /** Minimum shear resistance Vmin (kN/m) */
+  vMin: number;
+  /** Final VRd,c = max(vRdc, vMin) (kN/m) */
+  vRdcFinal: number;
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Check passed (VSd ≤ VRd,c) */
+  atende: boolean;
+}
+
 export interface ErrorResponse {
   error: string;
 }

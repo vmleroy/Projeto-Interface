@@ -51,6 +51,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /bridge/verify-shear:
+    post:
+      operationId: verifyShearNBR6118
+      tags: [bridge]
+      summary: Verify shear per NBR 6118:2023
+      description: Calculates VRd,c for slabs without transverse reinforcement per NBR 6118:2023 Item 19.4.1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ShearParams"
+      responses:
+        "200":
+          description: Shear verification results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShearResult"
+        "400":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /bridge/verify-section:
     post:
       operationId: verifySectionNBR6118
@@ -221,6 +246,72 @@ components:
         - vRd1
         - cortanteOk
         - aprovado
+    ShearParams:
+      type: object
+      description: Input parameters for NBR 6118:2023 shear verification (Item 19.4.1)
+      properties:
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        nSd:
+          type: number
+          description: Normal compressive force (kN/m), positive = compression
+        as1Cm2:
+          type: number
+          description: Longitudinal reinforcement area contributing to shear (cm²/m)
+        hCm:
+          type: number
+          description: Slab thickness (cm)
+        fck:
+          type: number
+          description: Concrete characteristic compressive strength (MPa)
+      required:
+        - vSd
+        - nSd
+        - as1Cm2
+        - hCm
+        - fck
+    ShearResult:
+      type: object
+      description: NBR 6118:2023 shear verification results
+      properties:
+        dCm:
+          type: number
+          description: Effective depth used (cm)
+        k:
+          type: number
+          description: Size effect coefficient k
+        rhoL:
+          type: number
+          description: Longitudinal reinforcement ratio ρl
+        sigmaCp:
+          type: number
+          description: Compressive stress from normal force σcp (MPa)
+        vRdc:
+          type: number
+          description: Shear resistance VRd,c (kN/m)
+        vMin:
+          type: number
+          description: Minimum shear resistance Vmin (kN/m)
+        vRdcFinal:
+          type: number
+          description: Final VRd,c = max(vRdc, vMin) (kN/m)
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        atende:
+          type: boolean
+          description: Check passed (VSd ≤ VRd,c)
+      required:
+        - dCm
+        - k
+        - rhoL
+        - sigmaCp
+        - vRdc
+        - vMin
+        - vRdcFinal
+        - vSd
+        - atende
     ErrorResponse:
       type: object
       properties:

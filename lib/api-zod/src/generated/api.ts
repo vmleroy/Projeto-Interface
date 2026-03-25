@@ -37,6 +37,46 @@ export const GenerateBridgeReportBody = zod.object({
 });
 
 /**
+ * Calculates VRd,c for slabs without transverse reinforcement per NBR 6118:2023 Item 19.4.1
+ * @summary Verify shear per NBR 6118:2023
+ */
+export const VerifyShearNBR6118Body = zod
+  .object({
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    nSd: zod
+      .number()
+      .describe("Normal compressive force (kN\/m), positive = compression"),
+    as1Cm2: zod
+      .number()
+      .describe(
+        "Longitudinal reinforcement area contributing to shear (cm²\/m)",
+      ),
+    hCm: zod.number().describe("Slab thickness (cm)"),
+    fck: zod
+      .number()
+      .describe("Concrete characteristic compressive strength (MPa)"),
+  })
+  .describe(
+    "Input parameters for NBR 6118:2023 shear verification (Item 19.4.1)",
+  );
+
+export const VerifyShearNBR6118Response = zod
+  .object({
+    dCm: zod.number().describe("Effective depth used (cm)"),
+    k: zod.number().describe("Size effect coefficient k"),
+    rhoL: zod.number().describe("Longitudinal reinforcement ratio ρl"),
+    sigmaCp: zod
+      .number()
+      .describe("Compressive stress from normal force σcp (MPa)"),
+    vRdc: zod.number().describe("Shear resistance VRd,c (kN\/m)"),
+    vMin: zod.number().describe("Minimum shear resistance Vmin (kN\/m)"),
+    vRdcFinal: zod.number().describe("Final VRd,c = max(vRdc, vMin) (kN\/m)"),
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    atende: zod.boolean().describe("Check passed (VSd ≤ VRd,c)"),
+  })
+  .describe("NBR 6118:2023 shear verification results");
+
+/**
  * Runs structural verification checks (crack width, fatigue, shear) per NBR 6118
  * @summary Verify section per NBR 6118
  */

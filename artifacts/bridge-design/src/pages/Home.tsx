@@ -116,6 +116,9 @@ export default function Home() {
           <Link href="/verify" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
             Módulo 2: Verificação NBR 6118
           </Link>
+          <Link href="/shear" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
+            Módulo 3: Cortante NBR 6118:2023
+          </Link>
         </div>
 
         {/* Header Section */}

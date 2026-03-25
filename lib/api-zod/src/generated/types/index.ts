@@ -13,4 +13,6 @@ export * from "./errorResponse";
 export * from "./healthStatus";
 export * from "./sectionParams";
 export * from "./sectionParamsCaa";
+export * from "./shearParams";
+export * from "./shearResult";
 export * from "./verificationResult";
