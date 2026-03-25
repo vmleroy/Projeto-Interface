@@ -14,3 +14,24 @@ import * as zod from "zod";
 export const HealthCheckResponse = zod.object({
   status: zod.string(),
 });
+
+/**
+ * Generates a .docx calculation report for the given bridge parameters
+ * @summary Generate bridge calculation report
+ */
+export const GenerateBridgeReportBody = zod.object({
+  vaoLongitudinal: zod.number().describe("Longitudinal span (Y) in meters"),
+  larguraTotal: zod.number().describe("Total width (X) in meters"),
+  numApoios: zod.number().describe("Number of supports"),
+  tipoViga: zod
+    .enum(["Viga I (Pré-moldada)", "Viga T", "Viga Caixão"])
+    .describe("Beam type"),
+  tipoLaje: zod
+    .enum(["Moldada in loco", "Com Pré-lajes"])
+    .describe("Slab system type"),
+  nomeObra: zod.string().optional().describe("Project\/bridge name"),
+  responsavelTecnico: zod
+    .string()
+    .optional()
+    .describe("Technical responsible name"),
+});

@@ -1,6 +1,5 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
   description: API specification
@@ -10,6 +9,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: bridge
+    description: Bridge design operations
 paths:
   /healthz:
     get:
@@ -24,6 +25,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /bridge/generate-report:
+    post:
+      operationId: generateBridgeReport
+      tags: [bridge]
+      summary: Generate bridge calculation report
+      description: Generates a .docx calculation report for the given bridge parameters
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BridgeParams"
+      responses:
+        "200":
+          description: DOCX file download
+          content:
+            application/vnd.openxmlformats-officedocument.wordprocessingml.document:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +60,47 @@ components:
           type: string
       required:
         - status
-
+    BridgeParams:
+      type: object
+      properties:
+        vaoLongitudinal:
+          type: number
+          description: Longitudinal span (Y) in meters
+        larguraTotal:
+          type: number
+          description: Total width (X) in meters
+        numApoios:
+          type: integer
+          description: Number of supports
+        tipoViga:
+          type: string
+          description: Beam type
+          enum:
+            - "Viga I (Pré-moldada)"
+            - "Viga T"
+            - "Viga Caixão"
+        tipoLaje:
+          type: string
+          description: Slab system type
+          enum:
+            - "Moldada in loco"
+            - "Com Pré-lajes"
+        nomeObra:
+          type: string
+          description: Project/bridge name
+        responsavelTecnico:
+          type: string
+          description: Technical responsible name
+      required:
+        - vaoLongitudinal
+        - larguraTotal
+        - numApoios
+        - tipoViga
+        - tipoLaje
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error

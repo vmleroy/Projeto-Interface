@@ -1,0 +1,17 @@
+packages:
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod validation for forms"
+  "framer-motion": "Animations and page transitions"
+  "zod": "Schema validation"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes safely"
+
+images:
+  - path: "artifacts/bridge-design/public/images/blueprint-bg.png"
+    description: "Dark architectural engineering blueprint background with technical grid lines, schematics, and geometric shapes in deep navy blue and cyan glowing lines. Clean, professional, technical."
+    aspect_ratio: "16:9"
+
+notes:
+  - Form submission triggers the API mutation for document generation.
+  - The API returns a Blob (.docx) which is automatically downloaded by the browser.
+  - Using a dark mode 'engineering' aesthetic.

@@ -8,3 +8,47 @@
 export interface HealthStatus {
   status: string;
 }
+
+/**
+ * Beam type
+ */
+export type BridgeParamsTipoViga =
+  (typeof BridgeParamsTipoViga)[keyof typeof BridgeParamsTipoViga];
+
+export const BridgeParamsTipoViga = {
+  "Viga_I_(Pré-moldada)": "Viga I (Pré-moldada)",
+  Viga_T: "Viga T",
+  Viga_Caixão: "Viga Caixão",
+} as const;
+
+/**
+ * Slab system type
+ */
+export type BridgeParamsTipoLaje =
+  (typeof BridgeParamsTipoLaje)[keyof typeof BridgeParamsTipoLaje];
+
+export const BridgeParamsTipoLaje = {
+  Moldada_in_loco: "Moldada in loco",
+  "Com_Pré-lajes": "Com Pré-lajes",
+} as const;
+
+export interface BridgeParams {
+  /** Longitudinal span (Y) in meters */
+  vaoLongitudinal: number;
+  /** Total width (X) in meters */
+  larguraTotal: number;
+  /** Number of supports */
+  numApoios: number;
+  /** Beam type */
+  tipoViga: BridgeParamsTipoViga;
+  /** Slab system type */
+  tipoLaje: BridgeParamsTipoLaje;
+  /** Project/bridge name */
+  nomeObra?: string;
+  /** Technical responsible name */
+  responsavelTecnico?: string;
+}
+
+export interface ErrorResponse {
+  error: string;
+}

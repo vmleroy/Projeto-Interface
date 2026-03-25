@@ -16,6 +16,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Artifacts
+
+### BridgeDesign Pro (`artifacts/bridge-design`)
+Web version of a Python/customtkinter bridge design desktop app. React + Vite frontend with form fields for bridge geometry (span, width, supports, beam type, slab type) and project identification. On submit, POSTs to the API and downloads a Word (.docx) structural calculation report.
+
 ## Structure
 
 ```text

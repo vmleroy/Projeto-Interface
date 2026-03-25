@@ -6,4 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from "./bridgeParams";
+export * from "./bridgeParamsTipoLaje";
+export * from "./bridgeParamsTipoViga";
+export * from "./errorResponse";
 export * from "./healthStatus";

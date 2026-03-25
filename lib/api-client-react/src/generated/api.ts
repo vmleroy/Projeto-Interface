@@ -5,18 +5,21 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import type {
+  MutationFunction,
   QueryFunction,
   QueryKey,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { HealthStatus } from "./api.schemas";
+import type { BridgeParams, ErrorResponse, HealthStatus } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
-import type { ErrorType } from "../custom-fetch";
+import type { ErrorType, BodyType } from "../custom-fetch";
 
 type AwaitedInput<T> = PromiseLike<T> | T;
 
@@ -99,3 +102,90 @@ export function useHealthCheck<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * Generates a .docx calculation report for the given bridge parameters
+ * @summary Generate bridge calculation report
+ */
+export const getGenerateBridgeReportUrl = () => {
+  return `/api/bridge/generate-report`;
+};
+
+export const generateBridgeReport = async (
+  bridgeParams: BridgeParams,
+  options?: RequestInit,
+): Promise<Blob> => {
+  return customFetch<Blob>(getGenerateBridgeReportUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(bridgeParams),
+  });
+};
+
+export const getGenerateBridgeReportMutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateBridgeReport>>,
+    TError,
+    { data: BodyType<BridgeParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateBridgeReport>>,
+  TError,
+  { data: BodyType<BridgeParams> },
+  TContext
+> => {
+  const mutationKey = ["generateBridgeReport"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateBridgeReport>>,
+    { data: BodyType<BridgeParams> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return generateBridgeReport(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateBridgeReportMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateBridgeReport>>
+>;
+export type GenerateBridgeReportMutationBody = BodyType<BridgeParams>;
+export type GenerateBridgeReportMutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Generate bridge calculation report
+ */
+export const useGenerateBridgeReport = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateBridgeReport>>,
+    TError,
+    { data: BodyType<BridgeParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateBridgeReport>>,
+  TError,
+  { data: BodyType<BridgeParams> },
+  TContext
+> => {
+  return useMutation(getGenerateBridgeReportMutationOptions(options));
+};
