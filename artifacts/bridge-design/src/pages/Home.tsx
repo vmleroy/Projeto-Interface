@@ -7,6 +7,7 @@ import {
   Building2, User, Ruler, MoveHorizontal, BoxSelect, 
   Layers, FileText, ChevronRight, Activity, Download, CheckCircle2 
 } from "lucide-react";
+import { Link } from "wouter";
 import { useGenerateBridgeReport } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input, Label, NativeSelect, FieldError } from "@/components/ui/form-components";
@@ -107,6 +108,16 @@ export default function Home() {
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 lg:pt-20">
         
+        {/* Navigation Tabs */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-10 overflow-x-auto pb-2">
+          <Link href="/" className="whitespace-nowrap px-5 py-3 rounded-xl bg-primary/20 text-primary border border-primary/30 font-medium font-display text-sm shadow-[0_0_15px_rgba(var(--primary),0.2)]">
+            Módulo 1: Definição do Empreendimento
+          </Link>
+          <Link href="/verify" className="whitespace-nowrap px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all border border-white/10 font-medium font-display text-sm">
+            Módulo 2: Verificação NBR 6118
+          </Link>
+        </div>
+
         {/* Header Section */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}

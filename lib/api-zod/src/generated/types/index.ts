@@ -11,3 +11,6 @@ export * from "./bridgeParamsTipoLaje";
 export * from "./bridgeParamsTipoViga";
 export * from "./errorResponse";
 export * from "./healthStatus";
+export * from "./sectionParams";
+export * from "./sectionParamsCaa";
+export * from "./verificationResult";

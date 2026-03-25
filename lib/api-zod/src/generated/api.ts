@@ -35,3 +35,46 @@ export const GenerateBridgeReportBody = zod.object({
     .optional()
     .describe("Technical responsible name"),
 });
+
+/**
+ * Runs structural verification checks (crack width, fatigue, shear) per NBR 6118
+ * @summary Verify section per NBR 6118
+ */
+export const VerifySectionNBR6118Body = zod
+  .object({
+    fck: zod
+      .number()
+      .describe("Concrete characteristic compressive strength (MPa)"),
+    hCm: zod.number().describe("Section total height (cm)"),
+    caa: zod
+      .enum(["I (Fraca)", "II (Moderada)", "III (Forte)", "IV (Muito Forte)"])
+      .describe("Aggressive environment class"),
+    bitolaMm: zod.number().describe("Reinforcement bar diameter (mm)"),
+    espacCm: zod.number().describe("Reinforcement bar spacing (cm)"),
+    mElu: zod
+      .number()
+      .describe("Ultimate limit state bending moment (kN.m\/m)"),
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    mElsW: zod
+      .number()
+      .describe("Serviceability moment for crack width check (kN.m\/m)"),
+    mFadMax: zod.number().describe("Maximum fatigue bending moment (kN.m\/m)"),
+    mFadMin: zod.number().describe("Minimum fatigue bending moment (kN.m\/m)"),
+  })
+  .describe("Input parameters for NBR 6118 section verification");
+
+export const VerifySectionNBR6118Response = zod
+  .object({
+    dCm: zod.number().describe("Effective depth (cm)"),
+    wk: zod.number().describe("Calculated crack width (mm)"),
+    wkLim: zod.number().describe("Allowable crack width (mm)"),
+    wkOk: zod.boolean().describe("Crack width check passed"),
+    deltaSig: zod.number().describe("Stress range for fatigue (kN\/m²)"),
+    limFad: zod.number().describe("Fatigue stress limit (kN\/m²)"),
+    fadigaOk: zod.boolean().describe("Fatigue check passed"),
+    vSd: zod.number().describe("Design shear force (kN\/m)"),
+    vRd1: zod.number().describe("Shear resistance without stirrups (kN\/m)"),
+    cortanteOk: zod.boolean().describe("Shear check passed"),
+    aprovado: zod.boolean().describe("All checks passed"),
+  })
+  .describe("NBR 6118 verification results");

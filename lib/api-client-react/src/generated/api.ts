@@ -16,7 +16,13 @@ import type {
   UseQueryResult,
 } from "@tanstack/react-query";
 
-import type { BridgeParams, ErrorResponse, HealthStatus } from "./api.schemas";
+import type {
+  BridgeParams,
+  ErrorResponse,
+  HealthStatus,
+  SectionParams,
+  VerificationResult,
+} from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
 import type { ErrorType, BodyType } from "../custom-fetch";
@@ -188,4 +194,91 @@ export const useGenerateBridgeReport = <
   TContext
 > => {
   return useMutation(getGenerateBridgeReportMutationOptions(options));
+};
+
+/**
+ * Runs structural verification checks (crack width, fatigue, shear) per NBR 6118
+ * @summary Verify section per NBR 6118
+ */
+export const getVerifySectionNBR6118Url = () => {
+  return `/api/bridge/verify-section`;
+};
+
+export const verifySectionNBR6118 = async (
+  sectionParams: SectionParams,
+  options?: RequestInit,
+): Promise<VerificationResult> => {
+  return customFetch<VerificationResult>(getVerifySectionNBR6118Url(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(sectionParams),
+  });
+};
+
+export const getVerifySectionNBR6118MutationOptions = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifySectionNBR6118>>,
+    TError,
+    { data: BodyType<SectionParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof verifySectionNBR6118>>,
+  TError,
+  { data: BodyType<SectionParams> },
+  TContext
+> => {
+  const mutationKey = ["verifySectionNBR6118"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof verifySectionNBR6118>>,
+    { data: BodyType<SectionParams> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return verifySectionNBR6118(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type VerifySectionNBR6118MutationResult = NonNullable<
+  Awaited<ReturnType<typeof verifySectionNBR6118>>
+>;
+export type VerifySectionNBR6118MutationBody = BodyType<SectionParams>;
+export type VerifySectionNBR6118MutationError = ErrorType<ErrorResponse>;
+
+/**
+ * @summary Verify section per NBR 6118
+ */
+export const useVerifySectionNBR6118 = <
+  TError = ErrorType<ErrorResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof verifySectionNBR6118>>,
+    TError,
+    { data: BodyType<SectionParams> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof verifySectionNBR6118>>,
+  TError,
+  { data: BodyType<SectionParams> },
+  TContext
+> => {
+  return useMutation(getVerifySectionNBR6118MutationOptions(options));
 };

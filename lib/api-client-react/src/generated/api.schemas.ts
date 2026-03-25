@@ -49,6 +49,73 @@ export interface BridgeParams {
   responsavelTecnico?: string;
 }
 
+/**
+ * Aggressive environment class
+ */
+export type SectionParamsCaa =
+  (typeof SectionParamsCaa)[keyof typeof SectionParamsCaa];
+
+export const SectionParamsCaa = {
+  "I_(Fraca)": "I (Fraca)",
+  "II_(Moderada)": "II (Moderada)",
+  "III_(Forte)": "III (Forte)",
+  "IV_(Muito_Forte)": "IV (Muito Forte)",
+} as const;
+
+/**
+ * Input parameters for NBR 6118 section verification
+ */
+export interface SectionParams {
+  /** Concrete characteristic compressive strength (MPa) */
+  fck: number;
+  /** Section total height (cm) */
+  hCm: number;
+  /** Aggressive environment class */
+  caa: SectionParamsCaa;
+  /** Reinforcement bar diameter (mm) */
+  bitolaMm: number;
+  /** Reinforcement bar spacing (cm) */
+  espacCm: number;
+  /** Ultimate limit state bending moment (kN.m/m) */
+  mElu: number;
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Serviceability moment for crack width check (kN.m/m) */
+  mElsW: number;
+  /** Maximum fatigue bending moment (kN.m/m) */
+  mFadMax: number;
+  /** Minimum fatigue bending moment (kN.m/m) */
+  mFadMin: number;
+}
+
+/**
+ * NBR 6118 verification results
+ */
+export interface VerificationResult {
+  /** Effective depth (cm) */
+  dCm: number;
+  /** Calculated crack width (mm) */
+  wk: number;
+  /** Allowable crack width (mm) */
+  wkLim: number;
+  /** Crack width check passed */
+  wkOk: boolean;
+  /** Stress range for fatigue (kN/m²) */
+  deltaSig: number;
+  /** Fatigue stress limit (kN/m²) */
+  limFad: number;
+  /** Fatigue check passed */
+  fadigaOk: boolean;
+  /** Design shear force (kN/m) */
+  vSd: number;
+  /** Shear resistance without stirrups (kN/m) */
+  vRd1: number;
+  /** Shear check passed */
+  cortanteOk: boolean;
+  /** All checks passed */
+  aprovado: boolean;
+}
+
 export interface ErrorResponse {
   error: string;
 }

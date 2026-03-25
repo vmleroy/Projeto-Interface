@@ -51,6 +51,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /bridge/verify-section:
+    post:
+      operationId: verifySectionNBR6118
+      tags: [bridge]
+      summary: Verify section per NBR 6118
+      description: Runs structural verification checks (crack width, fatigue, shear) per NBR 6118
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SectionParams"
+      responses:
+        "200":
+          description: Verification results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationResult"
+        "400":
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     HealthStatus:
@@ -97,6 +122,105 @@ components:
         - numApoios
         - tipoViga
         - tipoLaje
+    SectionParams:
+      type: object
+      description: Input parameters for NBR 6118 section verification
+      properties:
+        fck:
+          type: number
+          description: Concrete characteristic compressive strength (MPa)
+        hCm:
+          type: number
+          description: Section total height (cm)
+        caa:
+          type: string
+          description: Aggressive environment class
+          enum:
+            - "I (Fraca)"
+            - "II (Moderada)"
+            - "III (Forte)"
+            - "IV (Muito Forte)"
+        bitolaMm:
+          type: number
+          description: Reinforcement bar diameter (mm)
+        espacCm:
+          type: number
+          description: Reinforcement bar spacing (cm)
+        mElu:
+          type: number
+          description: Ultimate limit state bending moment (kN.m/m)
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        mElsW:
+          type: number
+          description: Serviceability moment for crack width check (kN.m/m)
+        mFadMax:
+          type: number
+          description: Maximum fatigue bending moment (kN.m/m)
+        mFadMin:
+          type: number
+          description: Minimum fatigue bending moment (kN.m/m)
+      required:
+        - fck
+        - hCm
+        - caa
+        - bitolaMm
+        - espacCm
+        - mElu
+        - vSd
+        - mElsW
+        - mFadMax
+        - mFadMin
+    VerificationResult:
+      type: object
+      description: NBR 6118 verification results
+      properties:
+        dCm:
+          type: number
+          description: Effective depth (cm)
+        wk:
+          type: number
+          description: Calculated crack width (mm)
+        wkLim:
+          type: number
+          description: Allowable crack width (mm)
+        wkOk:
+          type: boolean
+          description: Crack width check passed
+        deltaSig:
+          type: number
+          description: Stress range for fatigue (kN/m²)
+        limFad:
+          type: number
+          description: Fatigue stress limit (kN/m²)
+        fadigaOk:
+          type: boolean
+          description: Fatigue check passed
+        vSd:
+          type: number
+          description: Design shear force (kN/m)
+        vRd1:
+          type: number
+          description: Shear resistance without stirrups (kN/m)
+        cortanteOk:
+          type: boolean
+          description: Shear check passed
+        aprovado:
+          type: boolean
+          description: All checks passed
+      required:
+        - dCm
+        - wk
+        - wkLim
+        - wkOk
+        - deltaSig
+        - limFad
+        - fadigaOk
+        - vSd
+        - vRd1
+        - cortanteOk
+        - aprovado
     ErrorResponse:
       type: object
       properties:
