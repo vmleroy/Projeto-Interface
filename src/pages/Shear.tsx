@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useForm } from "react-hook-form";
+import React, { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +10,6 @@ import { useVerifyShearNBR6118 } from "@/lib/api-client";
 import type { ShearResult } from "@/lib/api-client";
 import { useToast } from "@/hooks/use-toast";
 import { Input, Label, FieldError } from "@/components/ui/form-components";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 
 const formSchema = z.object({
@@ -26,6 +25,9 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Shear() {
   const { toast } = useToast();
   const [result, setResult] = useState<ShearResult | null>(null);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const lastPayloadRef = useRef<string>("");
+  const formatUpdateTime = (value: Date) => value.toLocaleTimeString("pt-BR", { hour12: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -42,11 +44,7 @@ export default function Shear() {
     mutation: {
       onSuccess: (data) => {
         setResult(data);
-        toast({
-          title: "Verificação Concluída",
-          description: data.atende ? "Cortante Atende." : "Cortante Não Atende.",
-          variant: data.atende ? "default" : "destructive",
-        });
+        setLastUpdatedAt(new Date());
       },
       onError: (error) => {
         console.error("API Error:", error);
@@ -59,9 +57,30 @@ export default function Shear() {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    verifyShear({ data });
-  };
+  const watchedValues = useWatch({ control: form.control });
+
+  useEffect(() => {
+    const parsed = formSchema.safeParse(watchedValues);
+    if (!parsed.success) {
+      setResult(null);
+      setLastUpdatedAt(null);
+      return;
+    }
+
+    const payload = parsed.data;
+    const payloadKey = JSON.stringify(payload);
+
+    if (payloadKey === lastPayloadRef.current) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      lastPayloadRef.current = payloadKey;
+      verifyShear({ data: payload });
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [watchedValues, verifyShear]);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground pb-20">
@@ -123,7 +142,7 @@ export default function Shear() {
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
             className="lg:col-span-7 space-y-6"
           >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form className="space-y-6">
               
               <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
                 <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover:bg-primary transition-colors duration-300"></div>
@@ -202,44 +221,27 @@ export default function Shear() {
                 </div>
               </div>
 
-              {/* Submit Action */}
+              {/* Auto Verification Status */}
               <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  variant="gradient" 
-                  size="lg" 
-                  className="w-full sm:w-auto h-14 text-lg font-semibold group relative overflow-hidden"
-                  disabled={isPending}
-                >
-                  <AnimatePresence mode="wait">
-                    {isPending ? (
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center"
-                      >
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
-                        Calculando...
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="idle"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center"
-                      >
-                        <Activity className="w-5 h-5 mr-2" />
-                        Verificar Cortante
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
+                <div className="w-full sm:w-auto h-14 px-5 rounded-xl border border-primary/30 bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                  {isPending ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin mr-3" />
+                      Atualizando resultados...
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="w-5 h-5 mr-2" />
+                      Atualização automática ativa
+                    </>
+                  )}
+                </div>
                 <p className="mt-4 text-xs text-muted-foreground flex items-center">
                   <Activity className="w-3 h-3 mr-1.5 opacity-50" />
                   Cálculo conforme NBR 6118:2023 – Item 19.4.1. Lajes sem armadura transversal.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Última atualização: {lastUpdatedAt ? formatUpdateTime(lastUpdatedAt) : "--:--:--"}
                 </p>
               </div>
 
@@ -372,7 +374,7 @@ export default function Shear() {
                       </div>
                       <h3 className="text-xl font-display font-bold text-foreground mb-2">Aguardando Dados</h3>
                       <p className="text-muted-foreground max-w-xs">
-                        Preencha o formulário e execute a verificação para visualizar os resultados aqui.
+                        Preencha os campos para visualizar os resultados automaticamente em tempo real.
                       </p>
                     </div>
                   </motion.div>

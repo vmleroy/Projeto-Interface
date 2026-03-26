@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,9 +8,7 @@ import {
   ArrowDownToLine, MoveUpRight, Zap, Ruler, Building2, User, MoveHorizontal,
   BoxSelect, Download, FileText, ChevronRight
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { Input, Label, NativeSelect, FieldError } from "@/components/ui/form-components";
-import { Button } from "@/components/ui/button";
 import { verificarDeck, MotorNBR6118, calcularD } from "@/lib/bridge-utils";
 
 const bitolas = ["6.3", "8.0", "10.0", "12.5", "16.0", "20.0", "25.0", "32.0"] as const;
@@ -142,10 +140,10 @@ const SectionDiagram = ({ params }: { params: any }) => {
 };
 
 export default function BridgeDesignIntegrated() {
-  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<"geometry" | "verification">("geometry");
   const [deckResult, setDeckResult] = useState<any>(null);
-  const [isPending, setIsPending] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const formatUpdateTime = (value: Date) => value.toLocaleTimeString("pt-BR", { hour12: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -175,11 +173,19 @@ export default function BridgeDesignIntegrated() {
     },
   });
 
-  const handleVerifyDeck = () => {
-    setIsPending(true);
+  const watchedValues = useWatch({ control: form.control });
+
+  useEffect(() => {
+    const parsed = formSchema.safeParse(watchedValues);
+    if (!parsed.success) {
+      setDeckResult(null);
+      setLastUpdatedAt(null);
+      return;
+    }
+
+    const data = parsed.data;
 
     try {
-      const data = form.getValues();
       const verificationResult = verificarDeck({
         hCm: data.hCm,
         fck: data.fck,
@@ -234,23 +240,13 @@ export default function BridgeDesignIntegrated() {
       };
 
       setDeckResult(result);
-      setActiveTab("verification");
-      toast({
-        title: "Verificação Concluída",
-        description: result.aprovado ? "Tabuleiro Aprovado ✓" : "Tabuleiro Reprovado ✗",
-        variant: result.aprovado ? "default" : "destructive",
-      });
+      setLastUpdatedAt(new Date());
     } catch (error) {
       console.error("Error:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível realizar a verificação",
-        variant: "destructive",
-      });
-    } finally {
-      setIsPending(false);
+      setDeckResult(null);
+      setLastUpdatedAt(null);
     }
-  };
+  }, [watchedValues]);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20">
@@ -576,24 +572,13 @@ export default function BridgeDesignIntegrated() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={handleVerifyDeck}
-                    disabled={isPending}
-                    variant="gradient"
-                    className="w-full h-12 text-base font-semibold"
-                  >
-                    {isPending ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Calculando...
-                      </>
-                    ) : (
-                      <>
-                        <Activity className="w-5 h-5 mr-2" />
-                        Verificar Tabuleiro
-                      </>
-                    )}
-                  </Button>
+                  <div className="w-full h-12 rounded-xl border border-primary/30 bg-primary/10 text-primary flex items-center justify-center text-base font-semibold">
+                    <Activity className="w-5 h-5 mr-2" />
+                    Atualização automática ativa
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Última atualização: {lastUpdatedAt ? formatUpdateTime(lastUpdatedAt) : "--:--:--"}
+                  </p>
                 </motion.div>
               )}
             </div>
@@ -611,7 +596,7 @@ export default function BridgeDesignIntegrated() {
                 <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase">
                   Seção Transversal
                 </h3>
-                <SectionDiagram params={form.watch()} />
+                <SectionDiagram params={watchedValues} />
               </div>
 
               {/* Results */}

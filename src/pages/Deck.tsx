@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useForm, Controller } from "react-hook-form";
+import React, { useState, useEffect } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Input, Label, NativeSelect, FieldError } from "@/components/ui/form-components";
-import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { verificarDeck, MotorNBR6118, calcularD } from "@/lib/bridge-utils";
 
@@ -32,7 +31,8 @@ type FormValues = z.infer<typeof formSchema>;
 export default function Deck() {
   const { toast } = useToast();
   const [result, setResult] = useState<any>(null);
-  const [isPending, setIsPending] = useState(false);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<Date | null>(null);
+  const formatUpdateTime = (value: Date) => value.toLocaleTimeString("pt-BR", { hour12: false });
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -50,11 +50,19 @@ export default function Deck() {
     },
   });
 
-  const onSubmit = (data: FormValues) => {
-    setIsPending(true);
-    
+  const watchedValues = useWatch({ control: form.control });
+
+  useEffect(() => {
+    const parsed = formSchema.safeParse(watchedValues);
+    if (!parsed.success) {
+      setResult(null);
+      setLastUpdatedAt(null);
+      return;
+    }
+
+    const data = parsed.data;
+
     try {
-      // Execute local calculations
       const verificationResult = verificarDeck({
         hCm: data.hCm,
         fck: data.fck,
@@ -68,7 +76,6 @@ export default function Deck() {
         nSd: data.nSd,
       });
 
-      // Format result for display
       const dPos = calcularD(data.hCm, 2.5, parseFloat(data.phiPosMm));
       const dNeg = calcularD(data.hCm, 2.5, parseFloat(data.phiNegMm));
 
@@ -77,7 +84,6 @@ export default function Deck() {
       const asAdotPos = MotorNBR6118.calcularAsAdotada(parseFloat(data.phiPosMm), data.sPoscm);
       const asAdotNeg = MotorNBR6118.calcularAsAdotada(parseFloat(data.phiNegMm), data.sNegCm);
 
-      // Calcula kmd para visualização
       const calcKmd = (mSd: number, dCm: number, fck: number) => {
         const fcd = (fck / 1.4) / 10;
         return Math.abs(mSd) / (100 * Math.pow(dCm, 2) * fcd);
@@ -111,22 +117,18 @@ export default function Deck() {
       };
 
       setResult(resultFormatted);
-      toast({
-        title: "Verificação Concluída",
-        description: resultFormatted.aprovado ? "Tabuleiro Aprovado ✓" : "Tabuleiro Reprovado ✗",
-        variant: resultFormatted.aprovado ? "default" : "destructive",
-      });
+      setLastUpdatedAt(new Date());
     } catch (error) {
       console.error("Calculation Error:", error);
+      setResult(null);
+      setLastUpdatedAt(null);
       toast({
         title: "Erro na Verificação",
         description: "Não foi possível realizar a verificação do tabuleiro.",
         variant: "destructive",
       });
-    } finally {
-      setIsPending(false);
     }
-  };
+  }, [watchedValues, toast]);
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-background text-foreground pb-20">
@@ -188,7 +190,7 @@ export default function Deck() {
             transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
             className="lg:col-span-7 space-y-6"
           >
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form className="space-y-6">
               
               {/* Group 1: Dados Gerais */}
               <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
@@ -359,44 +361,18 @@ export default function Deck() {
                 </div>
               </div>
 
-              {/* Submit Action */}
+              {/* Auto Verification Status */}
               <div className="pt-4">
-                <Button 
-                  type="submit" 
-                  variant="gradient" 
-                  size="lg" 
-                  className="w-full sm:w-auto h-14 text-lg font-semibold group relative overflow-hidden"
-                  disabled={isPending}
-                >
-                  <AnimatePresence mode="wait">
-                    {isPending ? (
-                      <motion.div
-                        key="loading"
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className="flex items-center"
-                      >
-                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3" />
-                        Calculando...
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="idle"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="flex items-center"
-                      >
-                        <Activity className="w-5 h-5 mr-2" />
-                        Verificar Tabuleiro
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Button>
+                <div className="w-full sm:w-auto h-14 px-5 rounded-xl border border-primary/30 bg-primary/10 text-primary flex items-center justify-center font-semibold">
+                  <Activity className="w-5 h-5 mr-2" />
+                  Atualização automática ativa
+                </div>
                 <p className="mt-4 text-xs text-muted-foreground flex items-center">
                   <Activity className="w-3 h-3 mr-1.5 opacity-50" />
                   Cálculo conforme NBR 6118. Verificação de Flexão ELU e Cortante para lajes de tabuleiro.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Última atualização: {lastUpdatedAt ? formatUpdateTime(lastUpdatedAt) : "--:--:--"}
                 </p>
               </div>
 
@@ -586,7 +562,7 @@ export default function Deck() {
                       </div>
                       <h3 className="text-xl font-display font-bold text-foreground mb-2">Aguardando Dados</h3>
                       <p className="text-muted-foreground max-w-xs">
-                        Preencha o formulário e execute a verificação para visualizar os resultados aqui.
+                        Preencha os campos para visualizar os resultados automaticamente em tempo real.
                       </p>
                     </div>
                   </motion.div>
