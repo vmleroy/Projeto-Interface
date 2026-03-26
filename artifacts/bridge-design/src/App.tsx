@@ -6,6 +6,7 @@ import Home from "@/pages/Home";
 import Verify from "@/pages/Verify";
 import Shear from "@/pages/Shear";
 import Deck from "@/pages/Deck";
+import BridgeDesignIntegrated from "@/pages/BridgeDesignIntegrated";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -21,6 +22,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/integrated" component={BridgeDesignIntegrated} />
       <Route path="/verify" component={Verify} />
       <Route path="/shear" component={Shear} />
       <Route path="/deck" component={Deck} />

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -6,12 +6,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, CheckCircle2, XCircle, AlertTriangle, Layers, Hammer, ArrowDownToLine, MoveUpRight, Zap
 } from "lucide-react";
-import { useVerifyDeck } from "@workspace/api-client-react";
-import type { DeckResult } from "@workspace/api-client-react/src/generated/api.schemas";
 import { useToast } from "@/hooks/use-toast";
 import { Input, Label, NativeSelect, FieldError } from "@/components/ui/form-components";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { verificarDeck, MotorNBR6118, calcularD } from "@/lib/bridge-utils";
 
 const bitolas = ["6.3", "8.0", "10.0", "12.5", "16.0", "20.0", "25.0", "32.0"] as const;
 
@@ -32,7 +31,8 @@ type FormValues = z.infer<typeof formSchema>;
 
 export default function Deck() {
   const { toast } = useToast();
-  const [result, setResult] = useState<DeckResult | null>(null);
+  const [result, setResult] = useState<any>(null);
+  const [isPending, setIsPending] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -50,35 +50,82 @@ export default function Deck() {
     },
   });
 
-  const { mutate: verifyDeck, isPending } = useVerifyDeck({
-    mutation: {
-      onSuccess: (data) => {
-        setResult(data);
-        toast({
-          title: "Verificação Concluída",
-          description: data.aprovado ? "Tabuleiro Aprovado." : "Tabuleiro Reprovado.",
-          variant: data.aprovado ? "default" : "destructive",
-        });
-      },
-      onError: (error) => {
-        console.error("API Error:", error);
-        toast({
-          title: "Erro na Verificação",
-          description: "Não foi possível realizar a verificação do tabuleiro.",
-          variant: "destructive",
-        });
-      },
-    },
-  });
-
   const onSubmit = (data: FormValues) => {
-    verifyDeck({
-      data: {
-        ...data,
+    setIsPending(true);
+    
+    try {
+      // Execute local calculations
+      const verificationResult = verificarDeck({
+        hCm: data.hCm,
+        fck: data.fck,
+        mEluPos: data.mEluPos,
         phiPosMm: parseFloat(data.phiPosMm),
+        sPoscm: data.sPoscm,
+        mEluNeg: data.mEluNeg,
         phiNegMm: parseFloat(data.phiNegMm),
-      },
-    });
+        sNegCm: data.sNegCm,
+        vSd: data.vSd,
+        nSd: data.nSd,
+      });
+
+      // Format result for display
+      const dPos = calcularD(data.hCm, 2.5, parseFloat(data.phiPosMm));
+      const dNeg = calcularD(data.hCm, 2.5, parseFloat(data.phiNegMm));
+
+      const asReqPos = MotorNBR6118.calcularFlexaoElu(data.mEluPos, dPos, data.fck);
+      const asReqNeg = MotorNBR6118.calcularFlexaoElu(data.mEluNeg, dNeg, data.fck);
+      const asAdotPos = MotorNBR6118.calcularAsAdotada(parseFloat(data.phiPosMm), data.sPoscm);
+      const asAdotNeg = MotorNBR6118.calcularAsAdotada(parseFloat(data.phiNegMm), data.sNegCm);
+
+      // Calcula kmd para visualização
+      const calcKmd = (mSd: number, dCm: number, fck: number) => {
+        const fcd = (fck / 1.4) / 10;
+        return Math.abs(mSd) / (100 * Math.pow(dCm, 2) * fcd);
+      };
+
+      const resultFormatted = {
+        aprovado: verificationResult.flexaoPositiva.atende && verificationResult.flexaoNegativa.atende && verificationResult.cortante.atende,
+        pos: {
+          atende: verificationResult.flexaoPositiva.atende,
+          overReinforced: asReqPos === -1,
+          dCm: dPos,
+          kmd: calcKmd(data.mEluPos, dPos, data.fck),
+          asReq: asReqPos > 0 ? asReqPos : 0,
+          asMin: verificationResult.asMinima,
+          asAdot: Math.max(0, verificationResult.asMinima * 0.5),
+          asProv: asAdotPos,
+        },
+        neg: {
+          atende: verificationResult.flexaoNegativa.atende,
+          overReinforced: asReqNeg === -1,
+          dCm: dNeg,
+          kmd: calcKmd(data.mEluNeg, dNeg, data.fck),
+          asReq: asReqNeg > 0 ? asReqNeg : 0,
+          asMin: verificationResult.asMinima,
+          asAdot: Math.max(0, verificationResult.asMinima * 0.5),
+          asProv: asAdotNeg,
+        },
+        cortanteOk: verificationResult.cortante.atende,
+        vSd: data.vSd,
+        vRdcFinal: verificationResult.cortante.vRdc,
+      };
+
+      setResult(resultFormatted);
+      toast({
+        title: "Verificação Concluída",
+        description: resultFormatted.aprovado ? "Tabuleiro Aprovado ✓" : "Tabuleiro Reprovado ✗",
+        variant: resultFormatted.aprovado ? "default" : "destructive",
+      });
+    } catch (error) {
+      console.error("Calculation Error:", error);
+      toast({
+        title: "Erro na Verificação",
+        description: "Não foi possível realizar a verificação do tabuleiro.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsPending(false);
+    }
   };
 
   return (

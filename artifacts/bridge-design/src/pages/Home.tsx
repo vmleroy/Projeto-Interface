@@ -25,10 +25,29 @@ const formSchema = z.object({
     required_error: "Campo obrigatório",
     invalid_type_error: "Deve ser um número"
   }).min(0.1, "A largura deve ser maior que zero"),
-  numApoios: z.coerce.number({
+  numLongarinas: z.coerce.number({
     required_error: "Campo obrigatório",
     invalid_type_error: "Deve ser um número"
-  }).int("Deve ser um número inteiro").min(2, "Mínimo de 2 apoios"),
+  }).int("Deve ser um número inteiro").min(1, "Mínimo 1 longarina"),
+  alturaViga: z.coerce.number({
+    required_error: "Campo obrigatório",
+    invalid_type_error: "Deve ser um número"
+  }).min(0.1, "A altura deve ser maior que zero"),
+  larguraAlma: z.coerce.number({
+    required_error: "Campo obrigatório",
+    invalid_type_error: "Deve ser um número"
+  }).min(0.05, "A largura da alma deve ser maior que zero"),
+  larguraMesa: z.coerce.number({
+    required_error: "Campo obrigatório",
+    invalid_type_error: "Deve ser um número"
+  }).min(0.1, "A largura da mesa deve ser maior que zero"),
+  usaPreLaje: z.enum(["Sim", "Não"], {
+    required_error: "Selecione a opção de pré-laje",
+  }),
+  espessuraPreLaje: z.coerce.number({
+    required_error: "Campo obrigatório",
+    invalid_type_error: "Deve ser um número"
+  }).min(0.01, "A espessura deve ser maior que zero"),
   tipoViga: z.enum(["Viga I (Pré-moldada)", "Viga T", "Viga Caixão"], {
     required_error: "Selecione o tipo de viga",
   }),
@@ -50,7 +69,12 @@ export default function Home() {
       responsavelTecnico: "",
       vaoLongitudinal: 10.0,
       larguraTotal: 5.0,
-      numApoios: 2,
+      numLongarinas: 2,
+      alturaViga: 0.8,
+      larguraAlma: 0.2,
+      larguraMesa: 0.45,
+      usaPreLaje: "Não",
+      espessuraPreLaje: 0.05,
       tipoViga: "Viga I (Pré-moldada)",
       tipoLaje: "Moldada in loco",
     },
@@ -224,16 +248,55 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="numApoios">Número de Apoios <span className="text-destructive">*</span></Label>
+                    <Label htmlFor="numLongarinas">Número de Longarinas <span className="text-destructive">*</span></Label>
                     <Input 
-                      id="numApoios"
+                      id="numLongarinas"
                       type="number"
                       step="1"
                       icon={BoxSelect}
-                      error={form.formState.errors.numApoios?.message}
-                      {...form.register("numApoios")} 
+                      error={form.formState.errors.numLongarinas?.message}
+                      {...form.register("numLongarinas")} 
                     />
-                    <FieldError error={form.formState.errors.numApoios?.message} />
+                    <FieldError error={form.formState.errors.numLongarinas?.message} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="alturaViga">Altura da Viga [m] <span className="text-destructive">*</span></Label>
+                    <Input 
+                      id="alturaViga"
+                      type="number"
+                      step="0.01"
+                      icon={Ruler}
+                      error={form.formState.errors.alturaViga?.message}
+                      {...form.register("alturaViga")} 
+                    />
+                    <FieldError error={form.formState.errors.alturaViga?.message} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="larguraAlma">Largura da Alma - bw [m] <span className="text-destructive">*</span></Label>
+                    <Input 
+                      id="larguraAlma"
+                      type="number"
+                      step="0.01"
+                      icon={Ruler}
+                      error={form.formState.errors.larguraAlma?.message}
+                      {...form.register("larguraAlma")} 
+                    />
+                    <FieldError error={form.formState.errors.larguraAlma?.message} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="larguraMesa">Largura da Mesa - bf [m] <span className="text-destructive">*</span></Label>
+                    <Input 
+                      id="larguraMesa"
+                      type="number"
+                      step="0.01"
+                      icon={Ruler}
+                      error={form.formState.errors.larguraMesa?.message}
+                      {...form.register("larguraMesa")} 
+                    />
+                    <FieldError error={form.formState.errors.larguraMesa?.message} />
                   </div>
 
                   <div className="space-y-2">
@@ -252,7 +315,7 @@ export default function Home() {
                     <FieldError error={form.formState.errors.tipoViga?.message} />
                   </div>
 
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label htmlFor="tipoLaje">Sistema da Laje <span className="text-destructive">*</span></Label>
                     <Controller
                       name="tipoLaje"
@@ -267,6 +330,52 @@ export default function Home() {
                     <FieldError error={form.formState.errors.tipoLaje?.message} />
                   </div>
                 </div>
+              </div>
+
+              {/* Section 3: Pré-laje (Conditional) */}
+              {form.watch("tipoLaje") === "Com Pré-lajes" && (
+                <div className="glass-panel rounded-3xl p-6 sm:p-8 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1 h-full bg-orange-500/50 group-hover:bg-orange-500 transition-colors duration-300"></div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="p-2 bg-orange-500/10 rounded-lg text-orange-400">
+                      <Layers className="w-5 h-5" />
+                    </div>
+                    <h2 className="text-xl font-display font-semibold text-foreground">Configuração de Pré-Laje</h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="usaPreLaje">Usa Pré-Laje? <span className="text-destructive">*</span></Label>
+                      <Controller
+                        name="usaPreLaje"
+                        control={form.control}
+                        render={({ field }) => (
+                          <NativeSelect {...field} id="usaPreLaje" error={form.formState.errors.usaPreLaje?.message}>
+                            <option value="Sim">Sim</option>
+                            <option value="Não">Não</option>
+                          </NativeSelect>
+                        )}
+                      />
+                      <FieldError error={form.formState.errors.usaPreLaje?.message} />
+                    </div>
+
+                    {form.watch("usaPreLaje") === "Sim" && (
+                      <div className="space-y-2">
+                        <Label htmlFor="espessuraPreLaje">Espessura Pré-Laje [m] <span className="text-destructive">*</span></Label>
+                        <Input 
+                          id="espessuraPreLaje"
+                          type="number"
+                          step="0.01"
+                          icon={Ruler}
+                          error={form.formState.errors.espessuraPreLaje?.message}
+                          {...form.register("espessuraPreLaje")} 
+                        />
+                        <FieldError error={form.formState.errors.espessuraPreLaje?.message} />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
               </div>
 
               {/* Submit Action */}
@@ -361,6 +470,14 @@ export default function Home() {
                         <span className="font-mono font-medium text-foreground">
                           {((form.watch("vaoLongitudinal") || 0) * (form.watch("larguraTotal") || 0)).toFixed(2)} m²
                         </span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-border/50">
+                        <span className="text-muted-foreground">Altura da Viga</span>
+                        <span className="font-mono text-primary">{(form.watch("alturaViga") || 0).toFixed(2)} m</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 border-b border-border/50">
+                        <span className="text-muted-foreground">Longarinas</span>
+                        <span className="font-mono font-medium text-foreground">{form.watch("numLongarinas") || "0"}</span>
                       </div>
                       <div className="flex justify-between items-center py-3 border-b border-border/50">
                         <span className="text-muted-foreground">Superestrutura</span>
